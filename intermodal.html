@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Intermodal Inspection - Nickey Dispatch V 6.0</title>
+<meta name="theme-color" content="#000000">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Source Sans 3',sans-serif;background:#0a0a0a;color:#eee;min-height:100vh;font-size:16px;line-height:1.5;padding-bottom:40px}
+
+.hdr{background:#000;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #ffd700;position:sticky;top:0;z-index:100}
+.hdr-title{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#ffd700;letter-spacing:1.5px;line-height:1.1}
+.back-btn{background:#1a1a1a;color:#ffd700;padding:8px 14px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14px;border:1px solid #ffd700;cursor:pointer}
+
+.form-link-row{display:flex;gap:8px;padding:10px 16px;background:#000;border-bottom:1px solid #333}
+.form-link{flex:1;padding:10px;background:#1a1a1a;color:#aaa;border:1px solid #444;border-radius:8px;text-align:center;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;font-family:'Rajdhani',sans-serif}
+.form-link.active{background:#000;color:#ffd700;border-color:#ffd700}
+
+.section-hdr{background:#000;padding:10px 16px;color:#ffd700;font-family:'Rajdhani',sans-serif;letter-spacing:2px;text-transform:uppercase;font-size:14px;font-weight:700;text-align:center;border-bottom:1px solid #ffd700}
+
+.sec{background:#151515;border-radius:12px;border:1px solid #2a2a2a;margin:14px 16px}
+.sh{background:#000;padding:12px 16px;border-radius:12px 12px 0 0;border-bottom:1px solid #ffd700}
+.st{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#ffd700}
+.sb{padding:14px}
+
+.fld{margin-bottom:12px}
+.fld:last-child{margin-bottom:0}
+.fld label{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:6px}
+.fld input,.fld textarea{width:100%;border:1.5px solid #444;border-radius:8px;padding:12px;font-size:16px;background:#1a1a1a;color:#eee;outline:none;font-family:'Source Sans 3',sans-serif}
+.fld input:focus,.fld textarea:focus{border-color:#ffd700}
+.fld input.gold-text{font-family:'Rajdhani',sans-serif;font-weight:700;color:#ffd700;font-size:18px;letter-spacing:1px}
+
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.item-row{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.item-num{font-family:'Rajdhani',sans-serif;color:#ffd700;font-size:14px;font-weight:700;min-width:24px}
+.item-label{font-size:14.5px;color:#eee;flex:1;font-weight:600;line-height:1.3}
+.item-buttons{display:flex;gap:6px;flex-shrink:0}
+.item-btn{padding:8px 16px;background:#0f0f0f;color:#888;border:1.5px solid #444;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;min-width:48px;font-family:'Rajdhani',sans-serif;letter-spacing:1px}
+.item-btn.yes.active{background:#28a745;color:#fff;border-color:#1e7e34}
+.item-btn.no.active{background:#cc0000;color:#fff;border-color:#8a0000}
+
+.status-box{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer}
+.status-box.checked{background:#0a2a0a;border-color:#28a745}
+.status-checkbox{width:22px;height:22px;border:2px solid #888;border-radius:4px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#0a0a0a}
+.status-box.checked .status-checkbox{background:#28a745;border-color:#28a745}
+.status-checkbox::after{content:'✓';color:#fff;font-weight:700;display:none}
+.status-box.checked .status-checkbox::after{display:block}
+.status-label{flex:1;font-size:15px;color:#eee;font-weight:600}
+
+.email-btn{display:block;width:calc(100% - 32px);margin:14px 16px;padding:16px;background:#1a1a1a;color:#ffd700;border:2px solid #ffd700;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:1px;font-family:'Rajdhani',sans-serif;line-height:1.3}
+.email-btn .sub{display:block;font-size:12px;font-weight:500;color:#aaa;letter-spacing:0.5px;margin-top:4px;font-family:'Source Sans 3',sans-serif;text-transform:none}
+
+.save-btn{display:block;width:calc(100% - 32px);margin:14px 16px;padding:16px;background:#28a745;color:#fff;border:none;border-radius:10px;font-size:18px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:1px;font-family:'Source Sans 3',sans-serif}
+
+.autosave-pill{position:fixed;top:115px;right:14px;background:rgba(30,60,30,0.95);border:1px solid #4caf50;color:#a5d6a7;font-size:11px;font-weight:600;padding:4px 10px;border-radius:12px;z-index:150;opacity:0;transition:opacity 0.3s;pointer-events:none}
+.autosave-pill.show{opacity:1}
+</style>
+<script src="ndsync.js" defer></script>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-title">📋 INSPECTIONS</div>
+  <a href="index.html" class="back-btn">← BACK</a>
+</div>
+
+<div class="form-link-row">
+  <a class="form-link" href="inspection.html">Trailer Inspection</a>
+  <a class="form-link active" href="intermodal.html">Intermodal</a>
+</div>
+
+<div class="section-hdr">INTERMODAL VEHICLE INSPECTION</div>
+
+<div class="autosave-pill" id="autosavePill">💾 Auto-saved</div>
+
+<!-- Trip Details -->
+<div class="sec">
+  <div class="sh"><div class="st">Trip Details</div></div>
+  <div class="sb">
+    <div class="field-grid">
+      <div class="fld">
+        <label>Date</label>
+        <input type="date" class="gold-text" id="inspDate">
+      </div>
+      <div class="fld">
+        <label>Time</label>
+        <input type="text" class="gold-text" id="inspTime" placeholder="e.g. 8:30 AM">
+      </div>
+    </div>
+    <div class="field-grid">
+      <div class="fld">
+        <label>Chassis No.</label>
+        <input type="text" id="chassisNo">
+      </div>
+      <div class="fld">
+        <label>Container No.</label>
+        <input type="text" id="containerNo">
+      </div>
+    </div>
+    <div class="fld">
+      <label>Container Seal No(s).</label>
+      <input type="text" id="sealNo">
+    </div>
+  </div>
+</div>
+
+<!-- Inspection Items -->
+<div class="sec">
+  <div class="sh"><div class="st">Inspection Items — Mark Defective? Y/N</div></div>
+  <div class="sb" id="inspItems"></div>
+</div>
+
+<!-- Defects Notes -->
+<div class="sec">
+  <div class="sh"><div class="st">Explain Any Defects</div></div>
+  <div class="sb">
+    <textarea id="defectNotes" rows="4" placeholder="Describe any defects..."></textarea>
+  </div>
+</div>
+
+<!-- Status Checkboxes -->
+<div class="sec">
+  <div class="sh"><div class="st">Status</div></div>
+  <div class="sb">
+    <div class="status-box" id="statusOK" onclick="toggleStatus('OK')">
+      <div class="status-checkbox"></div>
+      <div class="status-label">Vehicle condition OK (no defects)</div>
+    </div>
+    <div class="status-box" id="statusNoCorrection" onclick="toggleStatus('NoCorrection')">
+      <div class="status-checkbox"></div>
+      <div class="status-label">Defects do not need correction for safe operation</div>
+    </div>
+    <div class="status-box" id="statusCorrected" onclick="toggleStatus('Corrected')">
+      <div class="status-checkbox"></div>
+      <div class="status-label">Defects Corrected</div>
+    </div>
+  </div>
+</div>
+
+<!-- Driver Signature -->
+<div class="sec">
+  <div class="sh"><div class="st">Driver Signature</div></div>
+  <div class="sb">
+    <div class="fld">
+      <label>Reporting Driver</label>
+      <input type="text" class="gold-text" id="reportingDriver">
+    </div>
+    <div class="fld">
+      <label>Reviewing Driver</label>
+      <input type="text" id="reviewingDriver" placeholder="(Optional)">
+    </div>
+  </div>
+</div>
+
+<!-- CC Email -->
+<div class="sec">
+  <div class="sh"><div class="st">CC Email (Optional)</div></div>
+  <div class="sb">
+    <div class="fld" style="margin-bottom:0;">
+      <label>Carbon Copy To</label>
+      <input type="email" id="ccEmail" placeholder="someone@example.com">
+    </div>
+  </div>
+</div>
+
+<!-- Save & Email Buttons -->
+<button class="save-btn" onclick="saveInspection()">💾 Save Inspection</button>
+<button class="email-btn" onclick="emailInspection()">
+  🖨️ Open Email to Marcus Clayton
+  <span class="sub">marcus.clayton@evonik.com</span>
+</button>
+
+<script>
+const INTERMODAL_ITEMS = [
+  "00. No defects",
+  "01. Brakes",
+  "02. Lighting devices, lamps, markers, and conspicuity marking",
+  "03. Wheels, rims, lugs, tires",
+  "04. Air line connections, hoses, and couplers",
+  "05. King pin upper coupling device",
+  "06. Rails or support frames",
+  "07. Tie-down bolsters",
+  "08. Locking pins, clevises, clamps or hooks",
+  "09. Sliders or sliding frame lock"
+];
+
+let intermodalData = {
+  date:'', time:'', chassisNo:'', containerNo:'', sealNo:'',
+  items:{}, defectNotes:'', status:{OK:false, NoCorrection:false, Corrected:false},
+  reportingDriver:'', reviewingDriver:'', ccEmail:''
+};
+
+function buildInspectionItems(){
+  const c = document.getElementById('inspItems');
+  c.innerHTML = '';
+  INTERMODAL_ITEMS.forEach((item, idx) => {
+    const id = 'item-' + idx;
+    const parts = item.split('. ');
+    const num = parts[0];
+    const label = parts.slice(1).join('. ');
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML =
+      '<span class="item-num">' + num + '.</span>' +
+      '<div class="item-label">' + label + '</div>' +
+      '<div class="item-buttons">' +
+        '<button class="item-btn yes" data-id="' + id + '" data-status="Y" onclick="setItemStatus(\'' + id + '\',\'Y\')">Y</button>' +
+        '<button class="item-btn no" data-id="' + id + '" data-status="N" onclick="setItemStatus(\'' + id + '\',\'N\')">N</button>' +
+      '</div>';
+    c.appendChild(row);
+  });
+}
+
+function setItemStatus(id, status){
+  document.querySelectorAll('[data-id="' + id + '"]').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-id="' + id + '"][data-status="' + status + '"]').classList.add('active');
+  intermodalData.items[id] = status;
+  autoSave();
+}
+
+function toggleStatus(key){
+  intermodalData.status[key] = !intermodalData.status[key];
+  document.getElementById('status' + key).classList.toggle('checked', intermodalData.status[key]);
+  autoSave();
+}
+
+let autoSaveTimer = null;
+function autoSave(){
+  intermodalData.date = document.getElementById('inspDate').value;
+  intermodalData.time = document.getElementById('inspTime').value;
+  intermodalData.chassisNo = document.getElementById('chassisNo').value;
+  intermodalData.containerNo = document.getElementById('containerNo').value;
+  intermodalData.sealNo = document.getElementById('sealNo').value;
+  intermodalData.defectNotes = document.getElementById('defectNotes').value;
+  intermodalData.reportingDriver = document.getElementById('reportingDriver').value;
+  intermodalData.reviewingDriver = document.getElementById('reviewingDriver').value;
+  intermodalData.ccEmail = document.getElementById('ccEmail').value;
+  localStorage.setItem('nickeyIntermodalDraft', JSON.stringify(intermodalData));
+  clearTimeout(autoSaveTimer);
+  const pill = document.getElementById('autosavePill');
+  pill.classList.add('show');
+  autoSaveTimer = setTimeout(() => pill.classList.remove('show'), 1500);
+}
+
+function loadDraft(){
+  try {
+    const draft = localStorage.getItem('nickeyIntermodalDraft');
+    if (!draft) return;
+    const d = JSON.parse(draft);
+    if (!d) return;
+    if (d.date) document.getElementById('inspDate').value = d.date;
+    if (d.time) document.getElementById('inspTime').value = d.time;
+    if (d.chassisNo) document.getElementById('chassisNo').value = d.chassisNo;
+    if (d.containerNo) document.getElementById('containerNo').value = d.containerNo;
+    if (d.sealNo) document.getElementById('sealNo').value = d.sealNo;
+    if (d.defectNotes) document.getElementById('defectNotes').value = d.defectNotes;
+    if (d.reportingDriver) document.getElementById('reportingDriver').value = d.reportingDriver;
+    if (d.reviewingDriver) document.getElementById('reviewingDriver').value = d.reviewingDriver;
+    if (d.ccEmail) document.getElementById('ccEmail').value = d.ccEmail;
+    if (d.items){
+      Object.keys(d.items).forEach(id => setItemStatus(id, d.items[id]));
+    }
+    if (d.status){
+      ['OK','NoCorrection','Corrected'].forEach(k => {
+        if (d.status[k]){
+          intermodalData.status[k] = true;
+          document.getElementById('status' + k).classList.add('checked');
+        }
+      });
+    }
+  } catch(e){ console.error('Draft load failed:', e); }
+}
+
+function saveInspection(){
+  autoSave();
+  intermodalData.savedAt = new Date().toISOString();
+  intermodalData.id = 'INTM-' + Date.now();
+
+  let history = [];
+  try { history = JSON.parse(localStorage.getItem('nickeyIntermodalHistory') || '[]'); } catch(e){ history = []; }
+  history.push(JSON.parse(JSON.stringify(intermodalData)));
+  localStorage.setItem('nickeyIntermodalHistory', JSON.stringify(history));
+
+  alert('✓ Intermodal Inspection saved!');
+}
+
+function emailInspection(){
+  autoSave();
+
+  const driver = intermodalData.reportingDriver || 'Driver';
+  const chassisNo = intermodalData.chassisNo || '—';
+  const containerNo = intermodalData.containerNo || '—';
+  const date = intermodalData.date || new Date().toISOString().split('T')[0];
+
+  // Subject: Pickup #/Trailer/Driver style — adapted for intermodal: Container # / Chassis # / Driver
+  const subject = 'Intermodal Inspection — ' + containerNo + ' — ' + chassisNo + ' — ' + driver;
+
+  // Build email body
+  let body = 'INTERMODAL VEHICLE INSPECTION\n';
+  body += '================================\n\n';
+  body += 'Date: ' + date + '\n';
+  if (intermodalData.time) body += 'Time: ' + intermodalData.time + '\n';
+  body += 'Chassis No: ' + chassisNo + '\n';
+  body += 'Container No: ' + containerNo + '\n';
+  if (intermodalData.sealNo) body += 'Seal No(s): ' + intermodalData.sealNo + '\n';
+  body += '\n';
+  body += 'INSPECTION ITEMS\n';
+  body += '----------------\n';
+  INTERMODAL_ITEMS.forEach((item, idx) => {
+    const id = 'item-' + idx;
+    const status = intermodalData.items[id] || '—';
+    body += item + ': ' + status + '\n';
+  });
+  body += '\n';
+  if (intermodalData.defectNotes){
+    body += 'DEFECTS / NOTES\n';
+    body += '---------------\n';
+    body += intermodalData.defectNotes + '\n\n';
+  }
+  body += 'STATUS\n';
+  body += '------\n';
+  if (intermodalData.status.OK) body += '[X] Vehicle condition OK (no defects)\n';
+  if (intermodalData.status.NoCorrection) body += '[X] Defects do not need correction for safe operation\n';
+  if (intermodalData.status.Corrected) body += '[X] Defects Corrected\n';
+  body += '\n';
+  body += 'Reporting Driver: ' + driver + '\n';
+  if (intermodalData.reviewingDriver) body += 'Reviewing Driver: ' + intermodalData.reviewingDriver + '\n';
+
+  // Build mailto URL
+  let mailto = 'mailto:marcus.clayton@evonik.com';
+  if (intermodalData.ccEmail && intermodalData.ccEmail.trim()){
+    mailto += '?cc=' + encodeURIComponent(intermodalData.ccEmail.trim()) + '&subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  } else {
+    mailto += '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+
+  window.location.href = mailto;
+}
+
+window.onload = function(){
+  // Default to today's date
+  if (!document.getElementById('inspDate').value){
+    document.getElementById('inspDate').value = new Date().toISOString().split('T')[0];
+  }
+  // Default reporting driver to current driver
+  const driver = localStorage.getItem('currentDriver');
+  if (driver && !document.getElementById('reportingDriver').value){
+    document.getElementById('reportingDriver').value = driver;
+  }
+
+  buildInspectionItems();
+  loadDraft();
+
+  // Wire up auto-save on all text fields
+  ['inspDate','inspTime','chassisNo','containerNo','sealNo','defectNotes','reportingDriver','reviewingDriver','ccEmail'].forEach(id => {
+    document.getElementById(id).addEventListener('input', autoSave);
+  });
+};
+</script>
+</body>
+</html>
