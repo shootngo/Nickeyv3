@@ -546,23 +546,13 @@ function setupDriverName(){
   let saved = localStorage.getItem("currentDriver");
   if (!saved){
     saved = prompt("Enter your full name:", "Frank Mulkey");
-    saved = saved ? saved.trim() : "Unknown Driver";
+    if (!saved || !saved.trim()) saved = "Unknown Driver";
+    saved = saved.trim();
     localStorage.setItem("currentDriver", saved);
   }
   currentDriver = saved;
   document.getElementById("driverBadge").textContent = "👤 " + currentDriver;
 }
-
-function changeDriverName(){
-  toggleMenu();
-  const newName = prompt("Enter your full name:", currentDriver);
-  if (newName && newName.trim()){
-    currentDriver = newName.trim();
-    localStorage.setItem("currentDriver", currentDriver);
-    document.getElementById("driverBadge").textContent = "👤 " + currentDriver;
-  }
-}
-
 function populateCustomerDropdown(){
   const select = document.getElementById("customerSelect");
   select.innerHTML = '<option value="">— Select Customer —</option>';
