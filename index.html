@@ -468,14 +468,63 @@ body{font-family:'Source Sans 3',sans-serif;background:#1a1a1a;color:#eee;min-he
 
 <!-- Settings -->
 <div class="emerg-overlay" id="settingsOverlay">
-  <div class="emerg-modal" style="border-color:#ffd700;">
+  <div class="emerg-modal" style="border-color:#ffd700;max-width:520px;">
     <div class="emerg-header" style="background:#1e3a8a;">
       <div class="emerg-title">⚙️ SETTINGS</div>
       <div class="emerg-close" onclick="closeSettings()">✕</div>
     </div>
-    <div style="padding:18px;color:#aaa;font-size:14px;">
-      <p style="margin-bottom:12px;">Truck info, trailer management, and customer management settings — coming back in a future update. For now, customers and trailers are managed in the dispatch form.</p>
+    
+    <div style="padding:14px;">
+      <!-- Tab buttons -->
+      <div style="display:flex;margin-bottom:14px;border-bottom:1px solid #444;">
+        <button onclick="switchSettingsTab(0)" id="tab0" 
+                style="flex:1;padding:12px;background:#1e3a8a;color:#ffd700;border:none;border-radius:8px 8px 0 0;font-weight:700;">Customers</button>
+        <button onclick="switchSettingsTab(1)" id="tab1" 
+                style="flex:1;padding:12px;background:#333;color:#ddd;border:none;border-radius:8px 8px 0 0;">Trailers</button>
+      </div>
+
+      <!-- CUSTOMERS TAB -->
+      <div id="settingsCustomers">
+        <div id="customerList" style="max-height:340px;overflow-y:auto;"></div>
+        <button onclick="addNewCustomer()" 
+                style="width:100%;margin-top:14px;padding:14px;background:#2a2500;color:#ffd700;border:1px solid #ffd700;border-radius:8px;font-weight:700;">
+          + Add New Customer
+        </button>
+      </div>
+
+      <!-- TRAILERS TAB -->
+      <div id="settingsTrailers" style="display:none;">
+        <div id="trailerList" style="max-height:340px;overflow-y:auto;"></div>
+        <button onclick="addNewTrailer()" 
+                style="width:100%;margin-top:14px;padding:14px;background:#2a2500;color:#ffd700;border:1px solid #ffd700;border-radius:8px;font-weight:700;">
+          + Add New Trailer
+        </button>
+      </div>
     </div>
+
+    <button class="back-btn" onclick="closeSettings()">← Back</button>
+  </div>
+</div>
+
+      <!-- CUSTOMERS TAB -->
+      <div id="settingsCustomers">
+        <div id="customerList" style="max-height:340px;overflow-y:auto;"></div>
+        <button onclick="addNewCustomer()" 
+                style="width:100%;margin-top:14px;padding:14px;background:#2a2500;color:#ffd700;border:1px solid #ffd700;border-radius:8px;font-weight:700;">
+          + Add New Customer
+        </button>
+      </div>
+
+      <!-- TRAILERS TAB -->
+      <div id="settingsTrailers" style="display:none;">
+        <div id="trailerList" style="max-height:340px;overflow-y:auto;"></div>
+        <button onclick="addNewTrailer()" 
+                style="width:100%;margin-top:14px;padding:14px;background:#2a2500;color:#ffd700;border:1px solid #ffd700;border-radius:8px;font-weight:700;">
+          + Add New Trailer
+        </button>
+      </div>
+    </div>
+
     <button class="back-btn" onclick="closeSettings()">← Back</button>
   </div>
 </div>
@@ -1021,7 +1070,7 @@ function showSDSModal(type){
 }
 
 window.onload = function(){
-  setupDriverName();
+  setupDriverName();  loadSavedCustomersAndTrailers();
   setTdy();
   populateCustomerDropdown();
   populateTrailerDropdown();
@@ -1037,7 +1086,145 @@ document.addEventListener('ndsync:datapulled', function(){
     if (s) savedRecords = JSON.parse(s) || [];
   } catch(e) {}
 });
+// ==================== SETTINGS ====================
+let currentSettingsTab = 0;
 
+function openSettings(){
+  toggleMenu();
+  document.getElementById("settingsOverlay").style.display = "flex";
+  switchSettingsTab(0);
+}
+
+function closeSettings(){
+  document.getElementById("settingsOverlay").style.display = "none";
+}
+
+function switchSettingsTab(tab){
+  currentSettingsTab = tab;
+  document.getElementById("settingsCustomers").style.display = (tab === 0) ? "block" : "none";
+  document.getElementById("settingsTrailers").style.display = (tab === 1) ? "block" : "none";
+  
+  document.getElementById("tab0").style.background = (tab === 0) ? "#1e3a8a" : "#333";
+  document.getElementById("tab0").style.color = (tab === 0) ? "#ffd700" : "#ddd";
+  document.getElementById("tab1").style.background = (tab === 1) ? "#1e3a8a" : "#333";
+  document.getElementById("tab1").style.color = (tab === 1) ? "#ffd700" : "#ddd";
+  
+  if (tab === 0) renderCustomerList();
+  if (tab === 1) renderTrailerList();
+}
+
+function renderCustomerList(){
+  const container = document.getElementById("customerList");
+  container.innerHTML = "";
+  
+  customers.forEach((c, i) => {
+    const div = document.createElement("div");
+    div.style.cssText = "background:#252525;border:1px solid #444;border-radius:8px;padding:12px;margin-bottom:8px;";
+    div.innerHTML = `
+      <div style="font-weight:700;color:#ffd700;">${c.name}</div>
+      <div style="font-size:13px;color:#aaa;margin:4px 0;">Base Pay: $${c.pay.toFixed(2)} &nbsp;&nbsp; High Limit: ${c.limit || "—"} gal</div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button onclick="editCustomer(${i})" style="flex:1;padding:8px;background:#1e3a8a;color:#fff;border:none;border-radius:6px;font-size:13px;">Edit</button>
+        <button onclick="deleteCustomer(${i})" style="flex:1;padding:8px;background:#3a2a2a;color:#ff8888;border:none;border-radius:6px;font-size:13px;">Delete</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function editCustomer(index){
+  const c = customers[index];
+  const newName = prompt("Customer Name:", c.name);
+  if (!newName) return;
+  const newPay = parseFloat(prompt("Base Pay ($):", c.pay));
+  if (isNaN(newPay)) return;
+  const newLimit = parseFloat(prompt("High Limit (gallons):", c.limit || 0));
+  
+  customers[index].name = newName.trim();
+  customers[index].pay = newPay;
+  customers[index].limit = isNaN(newLimit) ? 0 : newLimit;
+  
+  localStorage.setItem("nickeyCustomers", JSON.stringify(customers));
+  renderCustomerList();
+  populateCustomerDropdown();
+  alert("Customer updated!");
+}
+
+function deleteCustomer(index){
+  if (!confirm("Delete this customer?")) return;
+  customers.splice(index, 1);
+  localStorage.setItem("nickeyCustomers", JSON.stringify(customers));
+  renderCustomerList();
+  populateCustomerDropdown();
+}
+
+function addNewCustomer(){
+  const name = prompt("New Customer Name:");
+  if (!name) return;
+  const pay = parseFloat(prompt("Base Pay ($):", "0"));
+  const limit = parseFloat(prompt("High Limit gallons (optional):", "0"));
+  
+  customers.push({
+    name: name.trim(),
+    pay: isNaN(pay) ? 0 : pay,
+    limit: isNaN(limit) ? 0 : limit
+  });
+  localStorage.setItem("nickeyCustomers", JSON.stringify(customers));
+  renderCustomerList();
+  populateCustomerDropdown();
+}
+
+function renderTrailerList(){
+  const container = document.getElementById("trailerList");
+  container.innerHTML = "";
+  
+  allTrailers.forEach((t, i) => {
+    const div = document.createElement("div");
+    div.style.cssText = "background:#252525;border:1px solid #444;border-radius:8px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;";
+    div.innerHTML = `
+      <div style="font-weight:700;color:#ffd700;">${t}</div>
+      <button onclick="deleteTrailer(${i})" style="padding:6px 14px;background:#3a2a2a;color:#ff8888;border:none;border-radius:6px;font-size:13px;">Remove</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function addNewTrailer(){
+  const prefix = prompt("Choose prefix:\nSD = Super D\nISO = ISO Tank\nDV = Dry Van\nRF = Reefer\nFB = Flatbed\nCN = Container", "SD");
+  if (!prefix) return;
+  
+  const number = prompt("Trailer number (e.g. 94, 144930, 18118):");
+  if (!number) return;
+  
+  const newTrailer = `${prefix} ${number.trim()}`;
+  
+  if (allTrailers.includes(newTrailer)) {
+    alert("That trailer already exists.");
+    return;
+  }
+  
+  allTrailers.push(newTrailer);
+  localStorage.setItem("nickeyTrailers", JSON.stringify(allTrailers));
+  renderTrailerList();
+  populateTrailerDropdown();
+  alert("Trailer added: " + newTrailer);
+}
+
+function deleteTrailer(index){
+  if (!confirm("Remove this trailer?")) return;
+  allTrailers.splice(index, 1);
+  localStorage.setItem("nickeyTrailers", JSON.stringify(allTrailers));
+  renderTrailerList();
+  populateTrailerDropdown();
+}
+
+function loadSavedCustomersAndTrailers(){
+  const savedC = localStorage.getItem("nickeyCustomers");
+  if (savedC) customers = JSON.parse(savedC);
+  
+  const savedT = localStorage.getItem("nickeyTrailers");
+  if (savedT) allTrailers = JSON.parse(savedT);
+}
 </script>
 </body>
 </html>
