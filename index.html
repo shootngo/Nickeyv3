@@ -838,19 +838,23 @@ function viewSavedRecords(){
   try {
     const s = localStorage.getItem("nickeySavedRecords");
     if (s) savedRecords = JSON.parse(s) || [];
-  } catch(e) { /* ignore */ }
+  } catch(e) {}
+
   const body = document.getElementById("savedRecordsBody");
   if (savedRecords.length === 0){
     body.innerHTML = '<div style="padding:30px 10px;text-align:center;color:#aaa;">No saved records yet.</div>';
   } else {
     let h = '';
-    savedRecords.slice().reverse().forEach(r => {
+    savedRecords.slice().reverse().forEach((r, idx) => {
+      const realIndex = savedRecords.length - 1 - idx;
       const ft = (r.fuelEntries || []).reduce((s, f) => s + (parseFloat(f.amount) || 0), 0);
-      h += '<div style="background:#252525;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:12px;">' +
-        '<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#ffd700;">Pickup #' + r.pickup + '</div>' +
-        '<div style="font-size:13px;color:#aaa;">' + r.date + ' • ' + r.customer + '</div>' +
-        '<div style="font-size:13px;color:#4caf50;margin-top:4px;">Base Pay: $' + (r.basePay || 0).toFixed(2) +
-          (ft > 0 ? ' • Fuel: $' + ft.toFixed(2) : '') + '</div></div>';
+      h += `<div onclick="loadRecordIntoForm(${realIndex}); closeSavedRecords();" 
+                style="background:#252525;border:1px solid #444;border-radius:10px;padding:14px;margin-bottom:12px;cursor:pointer;">
+        <div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:#ffd700;">Pickup #${r.pickup}</div>
+        <div style="font-size:13px;color:#aaa;">${r.date} • ${r.customer}</div>
+        <div style="font-size:13px;color:#4caf50;margin-top:4px;">Base Pay: $${(r.basePay || 0).toFixed(2)}${ft > 0 ? ' • Fuel: $' + ft.toFixed(2) : ''}</div>
+        <div style="font-size:11px;color:#888;margin-top:6px;">👆 Tap to load & edit on this device</div>
+      </div>`;
     });
     body.innerHTML = h;
   }
@@ -1224,6 +1228,72 @@ function loadSavedCustomersAndTrailers(){
   
   const savedT = localStorage.getItem("nickeyTrailers");
   if (savedT) allTrailers = JSON.parse(savedT);
+function loadRecordIntoForm(index){
+  const r = savedRecords[index];
+  if (!r) return;
+
+  // Fill form fields
+  document.getElementById("td").value = r.date || "";
+  document.getElementById("pki").value = r.pickup || "";
+  upPk();
+
+  const custSelect = document.getElementById("customerSelect");
+  custSelect.value = r.customer || "";
+  loadCustomerData();
+
+  document.getElementById("bpay").value = r.basePay || "";
+  document.getElementById("thl").value = r.highLimit || "";
+  document.getElementById("tki").value = r.trailer || "";
+
+  document.getElementById("arrivalDate").value = r.arrivalDate || "";
+  document.getElementById("arrivalTime").value = r.arrivalTime || "";
+  document.getElementById("departureDate").value = r.departureDate || "";
+  document.getElementById("departureTime").value = r.departureTime || "";
+
+  document.getElementById("tw").value = r.tankerWeight || "";
+  document.getElementById("atl").value = r.arrivalGallons || "";
+  document.getElementById("departureLoad").value = r.departureLoad || "";
+  document.getElementById("nts").value = r.notes || "";
+
+  // Reimbursements
+  const reimbCont = document.getElementById("reimbContainer");
+  reimbCont.innerHTML = "";
+  if (r.reimbursements && r.reimbursements.length > 0){
+    r.reimbursements.forEach(reb => {
+      addReimbRow();
+      const rows = reimbCont.querySelectorAll(".reimb-row");
+      const last = rows[rows.length-1];
+      last.querySelector('input[type="text"]').value = reb.desc || "";
+      last.querySelector('input[type="number"]').value = reb.amount || "";
+    });
+  } else {
+    addReimbRow();
+  }
+  updateReimbTotal();
+
+  // Fuel
+  const fuelCont = document.getElementById("fuelContainer");
+  fuelCont.innerHTML = "";
+  if (r.fuelEntries && r.fuelEntries.length > 0){
+    r.fuelEntries.forEach(f => addFuelEntry(f));
+  } else {
+    addFuelEntry();
+  }
+  updateFuelGrandTotal();
+
+  calcAndUpdate();
+  updateRemaining();
+
+  // Enter edit mode
+  editingRecordIdx = index;
+  document.getElementById("editBanner").classList.add("active");
+  document.getElementById("editPickupLabel").textContent = "Pickup #" + (r.pickup || "—");
+
+  // Toast
+  const pill = document.getElementById("autosavePill");
+  pill.textContent = "📥 Record loaded — ready to edit";
+  pill.style.opacity = "1";
+  setTimeout(() => pill.style.opacity = "0", 2200);
 }
 </script>
 </body>
