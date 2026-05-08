@@ -1324,7 +1324,171 @@ function loadRecordIntoForm(index){
   } catch (err) {
     alert('Could not read clipboard. Make sure you allow clipboard access when your browser asks.');
   }
+}<script>
+// ==================== FORM PERSISTENCE - AUTO SAVE ====================
+const STORAGE_KEY = 'nickeyDispatchDraft';
+
+function loadDraft() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    try {
+        const data = JSON.parse(saved);
+
+        // Simple fields
+        if (data.td) document.getElementById('td').value = data.td;
+        if (data.pki) {
+            document.getElementById('pki').value = data.pki;
+            if (typeof upPk === 'function') upPk();
+        }
+        if (data.customer) document.getElementById('customerSelect').value = data.customer;
+        if (data.bpay) document.getElementById('bpay').value = data.bpay;
+        if (data.thl) document.getElementById('thl').value = data.thl;
+        if (data.tki) document.getElementById('tki').value = data.tki;
+
+        if (data.arrivalDate) document.getElementById('arrivalDate').value = data.arrivalDate;
+        if (data.arrivalTime) document.getElementById('arrivalTime').value = data.arrivalTime;
+        if (data.departureDate) document.getElementById('departureDate').value = data.departureDate;
+        if (data.departureTime) document.getElementById('departureTime').value = data.departureTime;
+
+        if (data.tw) document.getElementById('tw').value = data.tw;
+        if (data.atl) document.getElementById('atl').value = data.atl;
+        if (data.liveGauge) document.getElementById('liveGauge').value = data.liveGauge;
+        if (data.departureLoad) document.getElementById('departureLoad').value = data.departureLoad;
+        if (data.nts) document.getElementById('nts').value = data.nts;
+
+        // Trigger calculations
+        if (typeof calcAndUpdate === 'function') calcAndUpdate();
+        if (typeof updateRemaining === 'function') updateRemaining();
+        if (typeof loadCustomerData === 'function') loadCustomerData();
+
+        // Reimbursements
+        if (data.reimbursements && data.reimbursements.length > 0) {
+            const container = document.getElementById('reimbContainer');
+            container.innerHTML = '';
+            data.reimbursements.forEach(re => {
+                addReimbRow();
+                const rows = container.querySelectorAll('.reimb-row');
+                const lastRow = rows[rows.length-1];
+                if (lastRow) {
+                    lastRow.querySelector('input[type="text"]').value = re.desc || '';
+                    lastRow.querySelector('input[type="number"]').value = re.amount || '';
+                }
+            });
+            if (typeof updateReimbTotal === 'function') updateReimbTotal();
+        }
+
+        // Fuel entries
+        if (data.fuelEntries && data.fuelEntries.length > 0) {
+            const container = document.getElementById('fuelContainer');
+            container.innerHTML = '';
+            data.fuelEntries.forEach(f => {
+                addFuelEntry(f);
+            });
+            if (typeof updateFuelGrandTotal === 'function') updateFuelGrandTotal();
+        }
+
+    } catch(e) { console.log("Draft load error", e); }
 }
+
+function saveDraft() {
+    const data = {
+        td: document.getElementById('td').value,
+        pki: document.getElementById('pki').value,
+        customer: document.getElementById('customerSelect').value,
+        bpay: document.getElementById('bpay').value,
+        thl: document.getElementById('thl').value,
+        tki: document.getElementById('tki').value,
+        arrivalDate: document.getElementById('arrivalDate').value,
+        arrivalTime: document.getElementById('arrivalTime').value,
+        departureDate: document.getElementById('departureDate').value,
+        departureTime: document.getElementById('departureTime').value,
+        tw: document.getElementById('tw').value,
+        atl: document.getElementById('atl').value,
+        liveGauge: document.getElementById('liveGauge').value,
+        departureLoad: document.getElementById('departureLoad').value,
+        nts: document.getElementById('nts').value,
+        reimbursements: [],
+        fuelEntries: []
+    };
+
+    // Reimbursements
+    document.querySelectorAll('#reimbContainer .reimb-row').forEach(row => {
+        const desc = row.querySelector('input[type="text"]');
+        const amt = row.querySelector('input[type="number"]');
+        if (desc && amt && amt.value) {
+            data.reimbursements.push({
+                desc: desc.value,
+                amount: amt.value
+            });
+        }
+    });
+
+    // Fuel
+    document.querySelectorAll('.fuel-entry').forEach(entry => {
+        const station = entry.querySelector('.fuel-station-input');
+        const amount = entry.querySelector('.fuel-amount-input');
+        const gallons = entry.querySelector('.fuel-gallons-input');
+        if (station || amount) {
+            data.fuelEntries.push({
+                station: station ? station.value : '',
+                amount: amount ? amount.value : '',
+                gallons: gallons ? gallons.value : ''
+            });
+        }
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    // Show autosave pill
+    const pill = document.getElementById('autosavePill');
+    if (pill) {
+        pill.textContent = '💾 Auto-saved';
+        pill.classList.add('show');
+        setTimeout(() => pill.classList.remove('show'), 1500);
+    }
+}
+
+// Clear Form (enhanced)
+function clearForm() {
+    if (confirm("Clear the entire form and delete saved draft?")) {
+        document.getElementById('reimbContainer').innerHTML = '';
+        document.getElementById('fuelContainer').innerHTML = '';
+        localStorage.removeItem(STORAGE_KEY);
+        if (typeof clearAllFormFields === 'function') clearAllFormFields();
+        if (typeof setTdy === 'function') setTdy();
+        if (typeof addReimbRow === 'function') addReimbRow();
+        if (typeof addFuelEntry === 'function') addFuelEntry();
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadDraft();
+
+    // Auto-save on any change
+    const inputs = ['td','pki','customerSelect','bpay','thl','tki','arrivalDate','arrivalTime',
+                   'departureDate','departureTime','tw','atl','liveGauge','departureLoad','nts'];
+    
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', saveDraft);
+            el.addEventListener('change', saveDraft);
+        }
+    });
+
+    // Watch dynamic containers
+    const observer = new MutationObserver(saveDraft);
+    const reimbCont = document.getElementById('reimbContainer');
+    const fuelCont = document.getElementById('fuelContainer');
+    if (reimbCont) observer.observe(reimbCont, { childList: true, subtree: true });
+    if (fuelCont) observer.observe(fuelCont, { childList: true, subtree: true });
+
+    // Save before leaving
+    window.addEventListener('beforeunload', saveDraft);
+});
+</script>
 </script>
 </body>
 </html>
