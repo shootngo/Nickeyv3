@@ -1,0 +1,25 @@
+name: guardian-restore-index
+on:
+  workflow_dispatch:
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: guardian/fix-icon-512-refs
+          fetch-depth: 0
+      - name: Restore index.html from main with icon-512-2.png hrefs
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:index.html | sed 's/href="icon-512.png"/href="icon-512-2.png"/g' > index.html
+          grep -q 'icon-512-2.png' index.html
+          ! grep -q 'href="icon-512.png"' index.html
+          git config user.name "shootngo"
+          git config user.email "106043271+shootngo@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: point apple-touch-icon and favicon at icon-512-2.png"
+          git push origin HEAD:guardian/fix-icon-512-refs
