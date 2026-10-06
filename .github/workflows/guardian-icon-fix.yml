@@ -1,0 +1,27 @@
+name: guardian one-shot icon href fix
+on:
+  push:
+    branches: [guardian/fix-icon-512-refs]
+    paths: ['.github/workflows/guardian-icon-fix.yml']
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: guardian/fix-icon-512-refs
+      - name: Point index.html icon hrefs at icon-512-2.png
+        run: |
+          before=$(grep -c 'href="icon-512\.png"' index.html || true)
+          test "$before" = "2"
+          sed -i 's/href="icon-512\.png"/href="icon-512-2.png"/g' index.html
+          test "$(grep -c 'href="icon-512-2\.png"' index.html)" = "2"
+          test "$(git diff --numstat index.html | awk '{print $1"/"$2}')" = "2/2"
+          git rm -q .github/workflows/guardian-icon-fix.yml
+          git config user.name "shootngo"
+          git config user.email "106043271+shootngo@users.noreply.github.com"
+          git add index.html
+          git commit -m "fix: point index.html apple-touch-icon and favicon at existing icon-512-2.png"
+          git push origin HEAD:guardian/fix-icon-512-refs
